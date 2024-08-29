@@ -68,7 +68,21 @@ class Node:
         return
 
 
-
+def getBG_by_count(octree, counts):
+    lock = threading.Lock()
+    bg_points = []
+    
+    def background(octree, counts):
+        nonlocal lock, bg_points
+        if octree.sideLength <=  octree.minSide  and octree.occupancy_count >= counts:
+            bg_points.append(octree.center)
+            return
+        
+        for pos in range(8):
+            if octree.children[pos] is not None:
+                background(octree.children[pos], counts)
+    background(octree, counts)
+    return bg_points
 
 
 def NodeCount(octree):

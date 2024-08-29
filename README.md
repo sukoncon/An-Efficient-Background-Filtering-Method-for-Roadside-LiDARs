@@ -17,10 +17,27 @@ This repository provides the official implementation of SVO-based background fil
 1. python package: open3d numpy torch
 2. cuda toolkit
 
+## Cloning the Repository
+```
+git clone git@github.com:sukoncon/An-Efficient-Background-Filtering-Method-for-Roadside-LiDARs.git SVO_BG
+cd SVO_BG
+```
+
 ## Installation
 ```
 python setup.py install --user
 ```
+
+## A simple case of background construction
+We offer multiple frames detected by the 80-beam Lidar. Begin by extracting the files with the following command:
+```
+unzip -d  ./ raw_lidardata/81_lidar80_small.zip
+```
+Next, perform background extraction using:
+```
+python SVO_utils/BgExtract.py
+```
+You will then find the background pcd file (background.pcd) and png file (background.png).
 
 ## A simple case of filtering
 We provide a background and a raw lidar data of 80-beam Lidar.
