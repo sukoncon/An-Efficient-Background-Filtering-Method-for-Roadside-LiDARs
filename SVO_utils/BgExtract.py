@@ -1,4 +1,7 @@
 import os
+import sys
+from argparse import ArgumentParser, Namespace
+import warnings
 import math
 import torch
 import numpy as np
@@ -6,7 +9,7 @@ from scipy.spatial.transform import Rotation
 from SVO_utils import octree
 from SVO_utils.helper import getCenterPos, pos2center
 
-
+warnings.filterwarnings("ignore")
 
 def run(path, Tocc, num_frames, sideLength = 128, minSide = 0.5, device = "cpu", enable_centers = False):
     """
@@ -77,27 +80,44 @@ def run(path, Tocc, num_frames, sideLength = 128, minSide = 0.5, device = "cpu",
 
 
 if __name__ == "__main__":
+    # Set up command line argument parser
+    parser = ArgumentParser(description="Extraction script parameters")
+    parser.add_argument("--source_path", "-s", required=True, type=str, help="Path of lidar data")
+    parser.add_argument("--Tocc", type=float, default=0.1, help="Threshold of occupancy ratio")
+    parser.add_argument("--num_frames", "-n", required=True, type=int, help="Number of frames to construct background")
+    parser.add_argument("--sideLength", type=float, default=128, help="Sidelength of the root voxel")
+    parser.add_argument("--minSide", type=float, default=0.5, help="Sidelength of the leave voxel")
+    parser.add_argument("--output_path", "-o", required=True, type=str, help="Path of background lidar data")
+
+    args = parser.parse_args(sys.argv[1:])
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # which device the data should be put in.
-    Tocc = 0.1 # threshold of occupancy ratio
-    path = "./raw_lidardata/81_lidar80" # path of lidar data
-    num_frames = 190 # total number of frames to construct background
-    sideLength = 128 # sidelength of the root voxel
-    minSide = 0.5 # sidelength of the leave voxel
+
+    path = args.source_path # path of lidar data
+    Tocc = args.Tocc # threshold of occupancy ratio
+    num_frames = args.num_frames # total number of frames to construct background
+    sideLength = args.sideLength # sidelength of the root voxel
+    minSide = args.minSide # sidelength of the leave voxel
 
     res_points = run(path, Tocc, num_frames, sideLength, minSide, device = device).cpu()
+
+    os.makedirs(args.output_path,exist_ok=True)
     # save to pytorch file
-    torch.save(res_points, "background.pt")
+    torch.save(res_points, os.path.join(args.output_path, "background.pt"))
+    print(f"Background Pytorch file is saved to {os.path.join(args.output_path, 'background.pt')}")
     # save to pcd file
     import open3d as o3d
     pcd_out = o3d.geometry.PointCloud()
     pcd_out.points = o3d.utility.Vector3dVector(res_points.cpu().numpy())
     # save the point cloud to a PCD file
-    o3d.io.write_point_cloud("background.pcd", pcd_out)
+    o3d.io.write_point_cloud(os.path.join(args.output_path, "background.pcd"), pcd_out)
+    print(f"Background PCD file is saved to {os.path.join(args.output_path, 'background.pcd')}")
 
     # plot 2D figure
     import matplotlib.pyplot as plt
-    detect_range = 128
+    detect_range = sideLength
     mask = (abs(res_points[:,0]) <= detect_range) & (abs(res_points[:,1]) <= detect_range)
     res_points = res_points[mask]
     plt.scatter(res_points[:,0], res_points[:,1], s = 1, c = 'red')
-    plt.savefig("./background.png")
+    plt.savefig(os.path.join(args.output_path, "background.png"))
+    print(f"BEV of background figure is saved to {os.path.join(args.output_path, 'background.png')}")

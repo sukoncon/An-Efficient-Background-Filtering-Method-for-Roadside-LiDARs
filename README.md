@@ -87,8 +87,7 @@ BEV of background figure is saved to results/background.png
 ## A simple case of filtering
 We offer several frames of testing files. Begin by extracting the files with the following command:
 ```
-unxz raw_lidardata/81_lidar80_ToFilter.tar.xz
-tar -xvf raw_lidardata/81_lidar80_ToFilter.tar 
+tar -xf raw_lidardata/81_lidar80_ToFilter.tar.xz
 ```
 Upon executing the subsequent script, one may produce the filtered Point Cloud Data.
 ```
